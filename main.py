@@ -196,6 +196,7 @@ class MarketDatabase:
         print("Наименование - Цена")
         for position in self.__positions:
             print(position.product.name, f"{position.product.price} руб.")
+        return self.__positions
 
     def getPositions(self):
         if len(self.__positions) == 0:
@@ -205,11 +206,13 @@ class MarketDatabase:
         print("Наименование - Цена - Количество - Описание")
         for position in self.__positions:
             print(position.product.name, f"{position.product.price} руб.", position.amount, f"{position.product.desc}")
+        return self.__positions
 
     def getProduct(self, name):
         for position in self.__positions:
             if position.product.name == name:
                 return position.product
+        print(f"ОШИБКА: Товар '{name}' не найден в каталоге")
         return None
 
     def getOrder(self, order_id):
@@ -219,24 +222,28 @@ class MarketDatabase:
         return None
 
     def printOrder(self, order_id):
-        for order in self.__orders:
-            if order.id == order_id:
-                print(f"Заказ {order_id}: ")
-                if order.isPaid:
-                    print("Оплачен")
-                else:
-                    print("Не оплачен!")
-                print("Наименование - Цена")
-                fullPrice = 0
-                for product in order.products:
-                    fullPrice += product.price
-                    print(product.name, f"{product.price} руб.")
-                print(f"Заказ на сумму: {fullPrice} руб.")
-                break
+        order = self.getOrder(order_id)
+        if order is None:
+            return
+        print(f"Заказ {order_id}: ")
+        if order.isPaid:
+            print("Оплачен")
+        else:
+            print("Не оплачен!")
+        print("Наименование - Цена")
+        fullPrice = 0
+        for product in order.products:
+            fullPrice += product.price
+            print(product.name, f"{product.price} руб.")
+        print(f"Заказ на сумму: {fullPrice} руб.")
+
+        return order
 
     def createOrder(self, user, products):
         order = Order(self.nextOrderId())
         for product in products:
+            if product is None:
+                continue
             for position in self.__positions:
                 if product.name == position.product.name:
                     if position.amount - 1 < 0:
@@ -248,8 +255,14 @@ class MarketDatabase:
         user.addOrder(order)
         print("Заказ создан....")
 
+        return order
+
     def addToOrder(self, order_id, product):
+        if product is None:
+            return None
         order = self.getOrder(order_id)
+        if order is None:
+            return None
         for position in self.__positions:
             if product.name == position.product.name:
                 if position.amount - 1 < 0:
@@ -261,6 +274,8 @@ class MarketDatabase:
 
     def payForOrder(self, order_id):
         order = self.getOrder(order_id)
+        if order is None:
+            return
         order.isPaid = True
         print(f"Заказ {order_id} успешно оплачен!")
 
